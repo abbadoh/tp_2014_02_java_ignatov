@@ -26,13 +26,16 @@ public class Frontend extends HttpServlet {
         if (request.getRequestURI().equals("/authform"))
         {
             response.getWriter().println(PageGenerator.getPage("authform.tml", pageVariables));
-            
         }
         else if (request.getRequestURI().equals("/userId"))
         {
             HttpSession session = request.getSession();
             Long userId = (Long) session.getAttribute("userId");
+            if(userId == null) {
+                response.sendRedirect("/authform");
+            } else {
             pageVariables.put("userId", userId);
+            }
             response.getWriter().println(PageGenerator.getPage("userId.tml", pageVariables));
         }
     }
@@ -55,6 +58,8 @@ public class Frontend extends HttpServlet {
                     session.setAttribute("userId", userId);
                 }
                 response.sendRedirect("/userId");
+            } else {
+                response.sendRedirect("/authform");
             }
         }
     }
