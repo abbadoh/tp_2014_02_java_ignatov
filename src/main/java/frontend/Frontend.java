@@ -13,9 +13,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Frontend extends HttpServlet {
-    
-    private String login = "";
-    private String password = "";
+
     private AtomicLong userIdGenerator = new AtomicLong();
 
     
@@ -34,22 +32,16 @@ public class Frontend extends HttpServlet {
         {
             HttpSession session = request.getSession();
             Long userId = (Long) session.getAttribute("userId");
-            if (userId == null) {
-                userId = userIdGenerator.getAndIncrement();
-                session.setAttribute("userId", userId);
-            }
-
             pageVariables.put("userId", userId);
             response.getWriter().println(PageGenerator.getPage("userId.tml", pageVariables));
         }
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        login = request.getParameter("login");
-        password = request.getParameter("password");
+        String login = request.getParameter("login");
+        String password = request.getParameter("password");
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        Map<String, Object> pageVariables = new HashMap<>();
 
         if (request.getRequestURI().equals("/authform"))
         {
