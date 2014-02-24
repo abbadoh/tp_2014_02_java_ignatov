@@ -7,7 +7,9 @@
         }
     </script>
 </head>
-<body onload='setInterval(function(){refresh()}, 1000 );'>
-<p>UserId: ${userId}</p>
+<body onload='setInterval(function(){refresh()}, 1000 );' background="background.jpg">
+<p><font color="pink">UserId: ${userId}</font></p>
+<h2><a href="/authform"><font color="pink">Назад</font></a></h2>
+
 </body>
 </html>

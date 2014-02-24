@@ -1,6 +1,7 @@
 package frontend;
 
 import templater.PageGenerator;
+import users.User;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -10,11 +11,13 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+//import java.util.concurrent.atomic.AtomicLong;
+
 
 public class Frontend extends HttpServlet {
 
-    private AtomicLong userIdGenerator = new AtomicLong();
+   // private AtomicLong userIdGenerator = new AtomicLong();
+    private HashMap<String, User> users = new HashMap<>();
 
     
     public void doGet(HttpServletRequest request,
@@ -25,8 +28,24 @@ public class Frontend extends HttpServlet {
 
         if (request.getRequestURI().equals("/authform"))
         {
+            HttpSession session = request.getSession();
+            Long userId = (Long) session.getAttribute("userId");
+            if(userId != null) {
+                pageVariables.put("userId", userId);
+            }
             response.getWriter().println(PageGenerator.getPage("authform.tml", pageVariables));
         }
+        if (request.getRequestURI().equals("/regform"))
+        {
+            response.getWriter().println(PageGenerator.getPage("regform.tml", pageVariables));
+        }
+        if (request.getRequestURI().equals("/logout"))
+        {
+            HttpSession session = request.getSession();
+            session.setAttribute("userId", null);
+            response.sendRedirect("/");
+        }
+
         else if (request.getRequestURI().equals("/userId"))
         {
             HttpSession session = request.getSession();
@@ -48,18 +67,29 @@ public class Frontend extends HttpServlet {
 
         if (request.getRequestURI().equals("/authform"))
         {
-            if (login.equals("vova") && password.equals("vova"))
+            if (users.containsKey(login) && users.get(login).rightPassword(password))
             {
                 HttpSession session = request.getSession();
-                Long userId = (Long)session.getAttribute("userId");
-                
-                if (userId == null) {
-                    userId = userIdGenerator.getAndIncrement();
-                    session.setAttribute("userId", userId);
-                }
+                Long userId = users.get(login).getUserid();
+                session.setAttribute("userId", userId);
                 response.sendRedirect("/userId");
-            } else {
+            } else
+            {
+                Map<String, Object> pageVariables = new HashMap<>();
+                pageVariables.put("alert", "Wrong username or password");
+                response.getWriter().println(PageGenerator.getPage("authform.tml", pageVariables));
+            }
+        } else if(request.getRequestURI().equals("/regform"))
+        {
+            if(!users.containsKey(login)) {
+                Long userId = new Long(users.size());
+                User user = new User(password, userId);
+                users.put(login, user);
                 response.sendRedirect("/authform");
+            }  else {
+                Map<String, Object> pageVariables = new HashMap<>();
+                pageVariables.put("alert", "This username is already registred");
+                response.getWriter().println(PageGenerator.getPage("regform.tml", pageVariables));
             }
         }
     }

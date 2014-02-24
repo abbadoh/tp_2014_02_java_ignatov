@@ -1,0 +1,15 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Регистрация</title>
+</head>
+<body background="background.jpg">
+	<form action="/regform" method="POST">
+    <h1><font color="pink">Registration</font></h1>
+	<font color="pink">Логин: <input type="text" name="login"/>
+    Пароль: <input type="password" name="password"/><font>
+	<input type="submit" value="sign up"/></br>
+    <p><font color="pink"><#if alert??>${alert}<#else></#if></font></p>
+    <a href="/"><font color="pink">back</font></a>
+	</form>
+</body>
+</html>
