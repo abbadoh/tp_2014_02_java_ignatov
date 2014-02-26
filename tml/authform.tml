@@ -1,25 +1,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>log in</title>
+    <link href="./css/main.css" rel="stylesheet">
 </head>
-<body background="background.jpg">
-
-    <p><font color="pink"><#if userId??>
-        <h2>logged as Id:${userId}</h2></br>
-        <h2><a href="/userId"><font color="pink">profile</a></br></h2>
-        <h2><a href="/logout"><font color="pink">log out</a></br></h2>
-
-    <#else><font></p>
+<body class="page">
+    <#if login??>
+        logged as ${login}</br></br>
+        <a class="button" href="/userId">profile</a></br>
+        <a class="button" href="/logout">log out</a></br>
+    <#else>
         <form action="/authform" method="POST">
-        <font color="pink"><h1>log in</h1><font>
-        <font color="pink">Логин: <input type="text" name="login"/>
-        Пароль: <input type="password" name="password"/><font>
-        <input type="submit" value="Войти"/></br>
-        <p><font color="pink"><#if alert??>${alert}<#else></#if><font></p>
-        <a href="/regform"><font color="pink">sign up</a></br>
+            <div class="title">log in</div>
+            Login: <input type="text" name="login"/>
+            Password: <input type="password" name="password"/></br>
+            <input type="submit" value="log in"/></br>
+            <#if alert??>${alert}<#else></#if>
+            <a class="button" href="/regform">sign up</a>
         </form>
-    </#if></font></p>
-    <h2><a href="/"><font color="pink">back</a></font></h2>
-
+    </#if>
+    <a class="button" href="/">back</a>
 </body>
 </html>

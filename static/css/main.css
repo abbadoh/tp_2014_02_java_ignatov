@@ -1,0 +1,16 @@
+.title {
+    padding-top: 15px;            
+    font-weight: bold;
+    font-size: 100px;
+}
+.page {
+    color: pink;
+    font-size: 80px;
+    text-align: center;
+    text-shadow: white 6 0 6px;
+    background: url("../background.jpg")
+}
+.button {
+	color: pink;
+	text-decoration: none;
+}

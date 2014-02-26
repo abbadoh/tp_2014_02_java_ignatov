@@ -9,7 +9,7 @@ public class User {
     public Boolean rightPassword(String password){
         return this.password.equals(password);
     }
-    public long getUserid(){
+    public long getUserid() {
         return this.userId;
     }
 }

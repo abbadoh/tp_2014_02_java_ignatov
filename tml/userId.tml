@@ -1,15 +1,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title>userId</title>
-    <script>
-        function refresh() {
-            location.reload();
-        }
-    </script>
-</head>
-<body onload='setInterval(function(){refresh()}, 1000 );' background="background.jpg">
-<p><font color="pink">UserId: ${userId}</font></p>
-<h2><a href="/authform"><font color="pink">Назад</font></a></h2>
-
-</body>
+    <head>
+        <link href="./css/main.css" rel="stylesheet">
+        <title>userId</title>
+        <script>
+            function refresh() {
+                location.reload();
+            }
+        </script>
+    </head>
+    <body class="page" onload='setInterval(function(){refresh()}, 1000 );'>
+        <p class="title">UserId: ${userId}</p>
+        <a class="button" href="/authform">Назад</a>
+    </body>
 </html>

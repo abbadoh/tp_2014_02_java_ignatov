@@ -1,15 +1,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<title>Регистрация</title>
+    <title>Sign up</title>
+    <link href="./css/main.css" rel="stylesheet">
 </head>
-<body background="background.jpg">
-	<form action="/regform" method="POST">
-    <h1><font color="pink">Registration</font></h1>
-	<font color="pink">Логин: <input type="text" name="login"/>
-    Пароль: <input type="password" name="password"/><font>
-	<input type="submit" value="sign up"/></br>
-    <p><font color="pink"><#if alert??>${alert}<#else></#if></font></p>
-    <a href="/"><font color="pink">back</font></a>
-	</form>
+<body class="page">
+    <form action="/regform" method="POST">
+        <div class="title">sign up</div>
+        Login: <input type="text" name="login"/>
+        Password: <input type="password" name="password"/></br>
+        <input type="submit" value="sign up"/></br>
+        <#if alert??>${alert}<#else></#if>
+    </form>
+    <a class="button" href="/">back</a>
 </body>
 </html>
