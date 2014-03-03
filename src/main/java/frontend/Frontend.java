@@ -11,16 +11,10 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Iterator;
-//import java.util.concurrent.atomic.AtomicLong;
-
 
 public class Frontend extends HttpServlet {
 
-   // private AtomicLong userIdGenerator = new AtomicLong();
     private HashMap<String, User> users = new HashMap<>();
-
-
     
     public void doGet(HttpServletRequest request,
                       HttpServletResponse response) throws ServletException, IOException {
@@ -47,7 +41,6 @@ public class Frontend extends HttpServlet {
             session.setAttribute("userId", null);
             response.sendRedirect("/authform");
         }
-
         else if (request.getRequestURI().equals("/userId"))
         {
             HttpSession session = request.getSession();
