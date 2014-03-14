@@ -6,9 +6,9 @@
 <body class="page">
     <form action="/regform" method="POST">
         <div class="title">sign up</div>
-        Login: <input type="text" name="login"/>
-        Password: <input type="password" name="password"/></br>
-        <input type="submit" value="sign up"/></br>
+        Login: <input class="input_box" type="text" name="login"/>
+        Password: <input class="input_box" type="password" name="password"/></br>
+        <input class="input" type="submit" value="sign up"/></br>
     </form>
      <#if alert??>${alert}</br><#else></#if>
     <a class="button" href="/">back</a>

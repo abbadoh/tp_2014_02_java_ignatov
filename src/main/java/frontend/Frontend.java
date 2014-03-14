@@ -2,8 +2,6 @@ package frontend;
 
 import dao.UsersDAO;
 import dataSet.UserDataSet;
-import executor.TExecutor;
-import handlers.TResultHandler;
 import templater.PageGenerator;
 
 import javax.servlet.ServletException;
@@ -19,7 +17,6 @@ import java.util.Map;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import executor.SimpleExecutor;
 
 
 public class Frontend extends HttpServlet {
@@ -46,6 +43,7 @@ public class Frontend extends HttpServlet {
         {
             HttpSession session = request.getSession();
             session.setAttribute("userId", null);
+            session.setAttribute("login", null);
             response.sendRedirect("/authform");
         }
         else if (request.getRequestURI().equals("/userId"))
@@ -65,16 +63,16 @@ public class Frontend extends HttpServlet {
         String login = request.getParameter("login");
         String password = request.getParameter("password");
         Connection con = getConnection();
+        UsersDAO dao = new UsersDAO(con);
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
         try {
             if (request.getRequestURI().equals("/authform"))
             {
-                if (userExists(con, login, password))
+                if (dao.userExists(con, login, password))
                 {
                     HttpSession session = request.getSession();
-                    UsersDAO dao = new UsersDAO(con);
-                    UserDataSet user = dao.get(login);
+                    UserDataSet user = dao.getByName(login);
                     session.setAttribute("userId", user.getId());
                     session.setAttribute("login", user.getLogin());
                     response.sendRedirect("/userId");
@@ -86,9 +84,9 @@ public class Frontend extends HttpServlet {
                 }
             } else if(request.getRequestURI().equals("/regform"))
             {
-                if(!userExists(con, login)) {
-                    SimpleExecutor exec = new SimpleExecutor();
-                    exec.execUpdate(con, "insert into users (login, password) values ('"+login+"', '"+password+"')");
+                if(!dao.userExists(con, login)) {
+                    UserDataSet user= new UserDataSet(login, password);
+                    dao.add(user);
                     response.sendRedirect("/authform");
                 }  else {
                     Map<String, Object> pageVariables = new HashMap<>();
@@ -100,28 +98,6 @@ public class Frontend extends HttpServlet {
                 e.printStackTrace();
         }
     }
-
-
-    public boolean userExists(Connection con, String login) throws  SQLException{
-        TExecutor exec = new TExecutor();
-        return exec.execQuery(con, "select * from users where login='" + login + "'", new TResultHandler<Boolean>(){
-            public Boolean handle(ResultSet result) throws SQLException {
-                return result.next();
-            }
-        });
-    }
-
-    public boolean userExists(Connection con, String login, String password) throws  SQLException{
-        TExecutor exec = new TExecutor();
-        return exec.execQuery(con, "select * from users where login='" + login +
-                "' and password='" + password + "'", new TResultHandler<Boolean>(){
-            public Boolean handle(ResultSet result) throws SQLException {
-                return result.next();
-            }
-        });
-    }
-
-
     public static Connection getConnection() {
         try{
             DriverManager.registerDriver((Driver) Class.forName("com.mysql.jdbc.Driver").newInstance());
