@@ -1,0 +1,10 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <link href="./css/main.css" rel="stylesheet">
+        <title>404 not found</title>
+    </head>
+    <body class="page">
+        <p class="title">Page not found</p>
+        <a class="button" href="/">Main page</a>
+    </body>
+</html>

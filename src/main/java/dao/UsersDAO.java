@@ -41,7 +41,7 @@ public class UsersDAO {
         SimpleExecutor exec = new SimpleExecutor();
         exec.execUpdate(con, "insert into users (login, password) values ('"+dataSet.getLogin()+"', '"+dataSet.getPassword()+"')");
     }
-    public boolean userExists(Connection con, String login) throws  SQLException{
+    public boolean isUserExists(Connection con, String login) throws  SQLException{
         TExecutor exec = new TExecutor();
         return exec.execQuery(con, "select * from users where login='" + login + "'", new TResultHandler<Boolean>(){
             public Boolean handle(ResultSet result) throws SQLException {
@@ -49,7 +49,7 @@ public class UsersDAO {
             }
         });
     }
-    public boolean userExists(Connection con, String login, String password) throws  SQLException{
+    public boolean isUserExists(Connection con, String login, String password) throws  SQLException{
         TExecutor exec = new TExecutor();
         return exec.execQuery(con, "select * from users where login='" + login +
                 "' and password='" + password + "'", new TResultHandler<Boolean>(){
