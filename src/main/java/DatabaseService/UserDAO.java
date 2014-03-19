@@ -1,18 +1,12 @@
-package dao;
-
-import executor.SimpleExecutor;
-import handlers.TResultHandler;
+package DatabaseService;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import dataSet.UserDataSet;
-import executor.TExecutor;
-
-public class UsersDAO {
+public class UserDAO {
 	private Connection con;
-	public UsersDAO(Connection con){
+	public UserDAO(Connection con){
 		this.con = con;
 	}
 	public UserDataSet get(long id) throws SQLException{
@@ -40,6 +34,10 @@ public class UsersDAO {
     public void add(UserDataSet dataSet) throws SQLException{
         SimpleExecutor exec = new SimpleExecutor();
         exec.execUpdate(con, "insert into users (login, password) values ('"+dataSet.getLogin()+"', '"+dataSet.getPassword()+"')");
+    }
+    public void delete(UserDataSet dataSet) throws SQLException{
+        SimpleExecutor exec = new SimpleExecutor();
+        exec.execUpdate(con, "delete from users where login ='" + dataSet.getLogin() + "'");
     }
     public boolean isUserExists(Connection con, String login) throws  SQLException{
         TExecutor exec = new TExecutor();

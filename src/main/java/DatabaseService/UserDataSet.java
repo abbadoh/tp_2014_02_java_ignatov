@@ -1,4 +1,4 @@
-package dataSet;
+package DatabaseService;
 
 public final class UserDataSet {
     private final long id;
@@ -8,6 +8,12 @@ public final class UserDataSet {
 
     public UserDataSet(long id, String name){
         this.id = id;
+        this.login = name;
+        this.password = "";
+    }
+
+    public UserDataSet(String name){
+        this.id = -1;
         this.login = name;
         this.password = "";
     }

@@ -1,7 +1,7 @@
 package frontend;
 
-import dao.UsersDAO;
-import dataSet.UserDataSet;
+import DatabaseService.UserDAO;
+import DatabaseService.UserDataSet;
 import templater.PageGenerator;
 
 import javax.servlet.ServletException;
@@ -61,13 +61,6 @@ public class Frontend extends HttpServlet {
         }
     }
 
-    public static void doLogout(HttpServletRequest request,HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession();
-        session.setAttribute("userId", null);
-        session.setAttribute("login", null);
-        response.sendRedirect("/authform");
-    }
-
     public static void makeRegistrationPage(HttpServletResponse response) throws IOException {
         Map<String, Object> pageVariables = new HashMap<>();
         response.getWriter().println(PageGenerator.getPage("regform.tml", pageVariables));
@@ -89,6 +82,7 @@ public class Frontend extends HttpServlet {
         Map<String, Object> pageVariables = new HashMap<>();
         if(userId == null) {
             response.sendRedirect("/authform");
+            return;
         } else {
             pageVariables.put("userId", userId);
         }
@@ -99,9 +93,16 @@ public class Frontend extends HttpServlet {
         response.getWriter().println(PageGenerator.getPage("404page.tml"));
     }
 
+    public static void doLogout(HttpServletRequest request,HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession();
+        session.setAttribute("userId", null);
+        session.setAttribute("login", null);
+        response.sendRedirect("/authform");
+    }
+
     public static void doRegistration(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
         Connection con = getConnection();
-        UsersDAO dao = new UsersDAO(con);
+        UserDAO dao = new UserDAO(con);
         String login = request.getParameter("login");
         String password = request.getParameter("password");
         if(!dao.isUserExists(con, login)) {
@@ -116,7 +117,7 @@ public class Frontend extends HttpServlet {
     }
     public static void doAuth(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
         Connection con = getConnection();
-        UsersDAO dao = new UsersDAO(con);
+        UserDAO dao = new UserDAO(con);
         String login = request.getParameter("login");
         String password = request.getParameter("password");
         if (dao.isUserExists(con, login, password))

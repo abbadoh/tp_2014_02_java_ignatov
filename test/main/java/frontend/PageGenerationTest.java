@@ -1,4 +1,4 @@
-package test;
+package frontend;
 
 import junit.framework.Assert;
 import org.junit.Test;
@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Created by gumo on 13/03/14.
  */
-public class pageGenerationTest {
+public class PageGenerationTest {
     Map<String, Object> pageVariables = new HashMap<>();
 
     @Test
