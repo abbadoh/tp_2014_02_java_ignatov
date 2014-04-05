@@ -1,6 +1,11 @@
 package DatabaseService;
 
+import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
+
+import java.net.ConnectException;
+import java.net.SocketException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -20,7 +25,7 @@ public class UserDAO {
 			
 		});
 	}
-    public UserDataSet getByName(String login) throws SQLException{
+    public UserDataSet getByName(String login) throws SQLException, SocketException{
         TExecutor exec = new TExecutor();
         return exec.execQuery(con, "select * from users where login='" + login + "'", new TResultHandler<UserDataSet>(){
 
@@ -31,15 +36,18 @@ public class UserDAO {
 
         });
     }
-    public void add(UserDataSet dataSet) throws SQLException{
-        SimpleExecutor exec = new SimpleExecutor();
-        exec.execUpdate(con, "insert into users (login, password) values ('"+dataSet.getLogin()+"', '"+dataSet.getPassword()+"')");
+    public boolean add(UserDataSet dataSet) throws SQLException, SocketException {
+        PreparedStatement stm = con.prepareStatement("insert into users (login, password) values (?,?)");
+        stm.setString(1, dataSet.getLogin());
+        stm.setString(2, dataSet.getPassword());
+        return stm.execute();
+
     }
     public void delete(UserDataSet dataSet) throws SQLException{
         SimpleExecutor exec = new SimpleExecutor();
         exec.execUpdate(con, "delete from users where login ='" + dataSet.getLogin() + "'");
     }
-    public boolean isUserExists(Connection con, String login) throws  SQLException{
+    public boolean isUserExists(Connection con, String login) throws  SQLException, SocketException {
         TExecutor exec = new TExecutor();
         return exec.execQuery(con, "select * from users where login='" + login + "'", new TResultHandler<Boolean>(){
             public Boolean handle(ResultSet result) throws SQLException {

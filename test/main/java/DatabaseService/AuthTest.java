@@ -1,5 +1,7 @@
 package DatabaseService;
 
+import MessageSystem.MessageSystem;
+import MessageSystem.Messages.MsgGetUserid;
 import  frontend.Frontend;
 
 import javax.servlet.ServletException;
@@ -23,13 +25,21 @@ public class AuthTest {
     HttpServletResponse response;
     HttpSession session;
     Frontend frontend;
+    MessageSystem ms;
 
     @Before
     public void init(){
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
         session = mock(HttpSession.class);
-        frontend = new Frontend();
+
+        ms = new MessageSystem();
+        frontend = new Frontend(ms);
+        DatabaseService databaseService1 = new DatabaseService(ms);
+        DatabaseService databaseService2 = new DatabaseService(ms);
+        (new Thread(frontend)).start();
+        (new Thread(databaseService1)).start();
+        (new Thread(databaseService2)).start();
     }
 
     @Test
@@ -38,11 +48,11 @@ public class AuthTest {
         when(request.getParameter("login")).thenReturn("test");
         when(request.getParameter("password")).thenReturn("test");
         when(request.getRequestURI()).thenReturn("/authform");
+        when(request.getSession().getId()).thenReturn("1");
 
         frontend.doPost(request, response);
         verify(response).sendRedirect("/userId");
-        verify(session).setAttribute("userId", (long) 5);
-        verify(session).setAttribute("login", "test");
+//        verify(ms).sendMessage(any(MsgGetUserid.class));
     }
 
     @Test
@@ -55,8 +65,11 @@ public class AuthTest {
         when(request.getParameter("login")).thenReturn("test");
         when(request.getParameter("password")).thenReturn("false");
         when(request.getRequestURI()).thenReturn("/authform");
+        when(request.getSession().getId()).thenReturn("1");
 
         frontend.doPost(request, response);
-        verify(response).getWriter();
+
+        verify(response).sendRedirect("/userId");
+//        todo
     }
 }

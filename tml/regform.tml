@@ -2,15 +2,35 @@
 <head>
     <title>Sign up</title>
     <link href="./css/main.css" rel="stylesheet">
+    <script>
+        function refresh() {
+            location.reload();
+        }
+    </script>
 </head>
-<body class="page">
-    <form action="/regform" method="POST">
-        <div class="title">sign up</div>
-        Login: <input class="input_box" type="text" name="login"/>
-        Password: <input class="input_box" type="password" name="password"/></br>
-        <input class="input" type="submit" value="sign up"/></br>
-    </form>
-     <#if alert??>${alert}</br><#else></#if>
-    <a class="button" href="/">back</a>
+<body class="page" onload='setInterval(function(){refresh()}, ${refreshPeriod} );'>
+
+    <#if needReg??>
+        <form action="/regform" method="POST">
+            <#if serverIsDown??>SERVER IS DOWN</br>try agin later</br>
+            <#else><div class="title">sign up</div></#if>
+
+            Login: <input class="input_box" type="text" name="login"/>
+            Password: <input class="input_box" type="password" name="password"/></br>
+            <input class="input" type="submit" value="sign up"/></br>
+        </form>
+        <a class="button" href="/">back</a>
+    <#else>
+        ${userState}
+        <#if userState = "you are already registered">
+            <a class="button" href="/"></br>back</a>
+        </#if>
+        <#if userState = "you are registered!">
+            <a class="button" href="/authform"></br>log in</a>
+        </#if>
+        <#if userState = "wait for registration">
+            ${serverTime}
+        </#if>
+    </#if>
 </body>
 </html>

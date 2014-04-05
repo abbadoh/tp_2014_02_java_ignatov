@@ -1,6 +1,8 @@
 package DatabaseService;
 
+import MessageSystem.MessageSystem;
 import frontend.Frontend;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.ServletException;
@@ -22,14 +24,31 @@ import static org.mockito.Mockito.when;
 */
 public class RegistrationTest {
 
+    HttpServletRequest request;
+    HttpServletResponse response;
+    HttpSession session;
+    MessageSystem ms;
+    Frontend frontend;
+
+    @Before
+    public void init(){
+        request = mock(HttpServletRequest.class);
+        response = mock(HttpServletResponse.class);
+        session = mock(HttpSession.class);
+        ms = new MessageSystem();
+        frontend = new Frontend(ms);
+        DatabaseService databaseService1 = new DatabaseService(ms);
+        DatabaseService databaseService2 = new DatabaseService(ms);
+        (new Thread(frontend)).start();
+        (new Thread(databaseService1)).start();
+        (new Thread(databaseService2)).start();
+
+
+    }
+
     @Test
     public void successRegistrationTest() throws IOException, ServletException, SQLException {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        HttpSession session = mock(HttpSession.class);
-        Frontend frontend = new Frontend();
-        Connection con = frontend.getConnection();
-
+        Connection con = DatabaseService.getConnection();
         UserDataSet user = new UserDataSet("registrationTestLogin");
         UserDAO dao = new UserDAO(con);
         dao.delete(user);
@@ -37,7 +56,6 @@ public class RegistrationTest {
         StringWriter stringWriter = new StringWriter();
         PrintWriter writer = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(writer);
-        stringWriter.toString();
 
         when(request.getSession()).thenReturn(session);
         when(request.getParameter("login")).thenReturn("registrationTestLogin");
@@ -45,24 +63,17 @@ public class RegistrationTest {
         when(request.getRequestURI()).thenReturn("/regform");
 
         frontend.doPost(request, response);
-        dao.delete(user);
-        verify(response).sendRedirect("/authform");
+        verify(response).sendRedirect("/regform");
+//        todo
     }
 
 
 
     @Test
-    public void UnsuccessRegistrationTest() throws IOException, ServletException {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        HttpSession session = mock(HttpSession.class);
-        Frontend frontend = new Frontend();
-
-
+    public void unsuccessRegistrationTest() throws IOException, ServletException {
         StringWriter stringWriter = new StringWriter();
         PrintWriter writer = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(writer);
-        stringWriter.toString();
 
         when(request.getSession()).thenReturn(session);
         when(request.getParameter("login")).thenReturn("test");
@@ -70,6 +81,7 @@ public class RegistrationTest {
         when(request.getRequestURI()).thenReturn("/regform");
 
         frontend.doPost(request, response);
-        verify(response).getWriter();
+        verify(response).sendRedirect("/regform");
+//??        todo
     }
 }

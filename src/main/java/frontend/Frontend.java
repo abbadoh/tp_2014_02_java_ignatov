@@ -1,7 +1,8 @@
 package frontend;
 
-import DatabaseService.UserDAO;
-import DatabaseService.UserDataSet;
+import MessageSystem.Messages.MsgGetUserid;
+import MessageSystem.Messages.MsgRegUser;
+import Utilities.TimeHelper;
 import templater.PageGenerator;
 
 import javax.servlet.ServletException;
@@ -10,32 +11,45 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import MessageSystem.MessageSystem;
+import MessageSystem.Address;
+import MessageSystem.Subscriber;
 
 
-import java.sql.Connection;
-import java.sql.SQLException;
+public class Frontend extends HttpServlet implements Runnable, Subscriber {
+
+    private MessageSystem ms;
+    private Address address;
+    private Map<String, UserSession> sessionIdToUserSession = new ConcurrentHashMap<>();
 
 
-public class Frontend extends HttpServlet {
+    public Frontend(MessageSystem ms){
+        this.ms = ms;
+        this.address = new Address();
+        ms.addService(this);
+        ms.getAddressService().setFrontend(address);
+    }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        switch(request.getRequestURI()){
+        switch (request.getRequestURI()) {
             case "/authform":
-                makeAuthPage(request,response);
-            break;
+                makeAuthPage(request, response);
+                break;
             case "/regform":
-                makeRegistrationPage(response);
+                makeRegistrationPage(request, response);
                 break;
             case "/logout":
-                doLogout(request,response);
+                doLogout(request, response);
                 break;
             case "/userId":
-                makeUserIdPage(request,response);
+                makeUserIdPage(request, response);
                 break;
             default:
                 make404page(response);
@@ -45,103 +59,187 @@ public class Frontend extends HttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        try {
-            switch(request.getRequestURI()){
-                case "/authform":
-                    doAuth(request,response);
-                    break;
-                case "/regform":
-                    doRegistration(request,response);
-                    break;
-                default:
-                    make404page(response);
-            }
-        } catch (SQLException e) {
-                e.printStackTrace();
+        switch (request.getRequestURI()) {
+            case "/authform":
+                doAuth(request, response);
+                break;
+            case "/regform":
+                doRegistration(request, response);
+                break;
+            default:
+                make404page(response);
         }
     }
 
-    public static void makeRegistrationPage(HttpServletResponse response) throws IOException {
+    public void makeRegistrationPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> pageVariables = new HashMap<>();
+        HttpSession session = request.getSession();
+        UserSession userSession = sessionIdToUserSession.get(session.getId());
+        if(userSession == null || userSession.getRegState() == 2){
+            pageVariables.put("needReg", true);
+        }
+        else if(userSession.getUserId() != null){
+            pageVariables.put("userState", "you are already registered");
+        }
+        else if(userSession.getRegState() == 0) {
+            pageVariables.put("userState", "wait for registration");
+            pageVariables.put("refreshPeriod", "1000");
+            pageVariables.put("serverTime", TimeHelper.getTime());
+        }
+        else if(userSession.getRegState() == -1) {
+            pageVariables.put("userState", "this username is already taken");
+            userSession.setRegState(2);
+            pageVariables.put("refreshPeriod", "1000");
+        }
+        else if(userSession.getRegState() == 1) {
+            pageVariables.put("userState", "you are registered!");
+        }
+        if(userSession != null && userSession.getServerState()) {
+            pageVariables.clear();
+            pageVariables.put("serverIsDown", true);
+            pageVariables.put("needReg", true);
+            userSession.setServerState(false);
+        }
+        if(pageVariables.get("refreshPeriod") == null){ pageVariables.put("refreshPeriod", "100000"); }
         response.getWriter().println(PageGenerator.getPage("regform.tml", pageVariables));
     }
 
-    public static void makeAuthPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+    public void makeAuthPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> pageVariables = new HashMap<>();
         HttpSession session = request.getSession();
-        Long userId = (Long) session.getAttribute("userId");
-        if(userId != null) {
-            pageVariables.put("login", session.getAttribute("login"));
+        UserSession userSession = sessionIdToUserSession.get(session.getId());
+        if (userSession != null && userSession.getUserId() != null && userSession.getUserId() != -1) {
+            pageVariables.put("login", userSession.getName());
         }
         response.getWriter().println(PageGenerator.getPage("authform.tml", pageVariables));
     }
 
-    public static void makeUserIdPage(HttpServletRequest request,HttpServletResponse response) throws IOException {
+    public void makeUserIdPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession();
-        Long userId = (Long) session.getAttribute("userId");
         Map<String, Object> pageVariables = new HashMap<>();
-        if(userId == null) {
-            response.sendRedirect("/authform");
-            return;
-        } else {
-            pageVariables.put("userId", userId);
+
+
+        UserSession userSession = sessionIdToUserSession.get(session.getId());
+        if (userSession == null) {
+            pageVariables.put("userState", "Auth error");
+            pageVariables.put("refreshPeriod", "100000");
         }
-        response.getWriter().println(PageGenerator.getPage("userId.tml", pageVariables));
+        else if (userSession.getUserId() == null) {
+            pageVariables.put("userState", "wait for authorization");
+            pageVariables.put("refreshPeriod", "1000");
+            pageVariables.put("lock",true);
+        }
+        else if (userSession.getUserId() == -1) {
+            pageVariables.put("userState", "wrong username or password");
+            pageVariables.put("refreshPeriod", "100000");
+        }
+        else {
+            pageVariables.put("userState","login : " + userSession.getName() + "</br> id : " + userSession.getUserId());
+            pageVariables.put("refreshPeriod", "100000");
+        }
+        if(userSession !=null && userSession.getServerState()) {
+            pageVariables.clear();
+            pageVariables.put("serverIsDown", true);
+            userSession.setServerState(false);
+            pageVariables.put("refreshPeriod", "100000");
+            doLogout(session.getId());
+        }
+        pageVariables.put("serverTime", TimeHelper.getTime());
+         response.getWriter().println(PageGenerator.getPage("userid.tml", pageVariables));
     }
 
     public static void make404page(HttpServletResponse response) throws IOException {
         response.getWriter().println(PageGenerator.getPage("404page.tml"));
     }
 
-    public static void doLogout(HttpServletRequest request,HttpServletResponse response) throws IOException {
+    public void doLogout(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession();
-        session.setAttribute("userId", null);
-        session.setAttribute("login", null);
+        sessionIdToUserSession.remove(session.getId());
         response.sendRedirect("/authform");
     }
 
-    public static void doRegistration(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
-        Connection con = getConnection();
-        UserDAO dao = new UserDAO(con);
+    public void doLogout(String sessionId) throws IOException {
+        sessionIdToUserSession.remove(sessionId);
+    }
+
+    public void doRegistration(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String login = request.getParameter("login");
         String password = request.getParameter("password");
-        if(!dao.isUserExists(con, login)) {
-            UserDataSet user= new UserDataSet(login, password);
-            dao.add(user);
-            response.sendRedirect("/authform");
-        }  else {
-            Map<String, Object> pageVariables = new HashMap<>();
-            pageVariables.put("alert", "This username is already registred");
-            response.getWriter().println(PageGenerator.getPage("regform.tml", pageVariables));
+        String sessionId = request.getSession().getId();
+        UserSession  userSession = sessionIdToUserSession.get(sessionId);
+        if(userSession == null) {
+            userSession = new UserSession(sessionId,ms.getAddressService());
+            sessionIdToUserSession.put(sessionId, userSession);
         }
+        else {
+            userSession.setRegState(0);
+        }
+
+        Address frontendAddress = getAddress();
+        Address accountServiceAddress = userSession.getAccountService();
+
+        ms.sendMessage(new MsgRegUser(frontendAddress, accountServiceAddress, login, password, sessionId));
+        response.sendRedirect("/regform");
     }
-    public static void doAuth(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
-        Connection con = getConnection();
-        UserDAO dao = new UserDAO(con);
+
+    public void doAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
         String login = request.getParameter("login");
         String password = request.getParameter("password");
-        if (dao.isUserExists(con, login, password))
-        {
-            HttpSession session = request.getSession();
-            UserDataSet user = dao.getByName(login);
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("login", user.getLogin());
-            response.sendRedirect("/userId");
-        } else
-        {
-            Map<String, Object> pageVariables = new HashMap<>();
-            pageVariables.put("alert", "Wrong username or password");
-            response.getWriter().println(PageGenerator.getPage("authform.tml", pageVariables));
+        String sessionId = request.getSession().getId();
+        UserSession  userSession = sessionIdToUserSession.get(sessionId);
+        if(userSession == null) {
+            userSession = new UserSession(sessionId,login,ms.getAddressService());
+            sessionIdToUserSession.put(sessionId, userSession);
+        }
+        else {
+            userSession.setName(login);
+        }
+        Address frontendAddress = getAddress();
+        Address accountServiceAddress = userSession.getAccountService();
+
+        ms.sendMessage(new MsgGetUserid(frontendAddress, accountServiceAddress, login, password, sessionId));
+        response.sendRedirect("/userId");
+    }
+
+    public  void run(){
+        while(true) {
+            ms.execForAbonent(this);
+            TimeHelper.sleep(100);
         }
     }
-    public static Connection getConnection() {
-        try{
-            DriverManager.registerDriver((Driver) Class.forName("com.mysql.jdbc.Driver").newInstance());
-            String url = "jdbc:mysql://127.0.0.1:3306/java_test?user=user&password=user";
-            return DriverManager.getConnection(url);
-        } catch (SQLException | InstantiationException | ClassNotFoundException | IllegalAccessException e) {
-            e.printStackTrace();
+
+    public void serverIsDown(String sessionId){
+        UserSession userSession = sessionIdToUserSession.get(sessionId);
+        if (userSession == null) {
+            System.out.append("Can't find user session for: ").append(sessionId);
+            return;
         }
-        return null;
+        userSession.setServerState(true);
     }
+
+
+    public void setId(String sessionId, Long userId){
+        UserSession userSession = sessionIdToUserSession.get(sessionId);
+        if (userSession == null) {
+            System.out.append("Can't find user session for: ").append(sessionId);
+            return;
+        }
+        userSession.setUserId(userId);
+    }
+
+    public void regComplete(String sessionId, Integer state){
+        UserSession userSession = sessionIdToUserSession.get(sessionId);
+        if (userSession == null) {
+            System.out.append("Can't find user session for: ").append(sessionId);
+            return;
+        }
+        userSession.setRegState(state);
+    }
+
+    public Address getAddress(){
+        return this.address;
+    }
+
 }

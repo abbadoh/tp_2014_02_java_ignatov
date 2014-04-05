@@ -8,8 +8,13 @@
             }
         </script>
     </head>
-    <body class="page" onload='setInterval(function(){refresh()}, 1000 );'>
-        <p class="title">UserId: ${userId}</p>
-        <a class="button" href="/authform">Назад</a>
+    <body class="page" onload='setInterval(function(){refresh()}, ${refreshPeriod} );'>
+        <#if serverIsDown??> Server is down</br>try to login later</br>
+        <#else>
+        <p class="title" id="1">${userState}</p>
+        </#if>
+        <#if lock??>${serverTime}</br>
+        <#else> <a class="button" href="/authform">Назад</a>
+        </#if>
     </body>
 </html>

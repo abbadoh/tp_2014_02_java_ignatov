@@ -1,5 +1,7 @@
 package frontend;
 
+import DatabaseService.DatabaseService;
+import MessageSystem.MessageSystem;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,20 +29,29 @@ public class RoutingTest {
     StringWriter stringWriter;
     PrintWriter writer;
     String page404;
+    MessageSystem ms;
 
     @Before
     public void init() throws IOException {
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
         session = mock(HttpSession.class);
-        frontend = new Frontend();
+        ms = new MessageSystem();
+
+        frontend = new Frontend(ms);
         stringWriter = new StringWriter();
         writer = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(writer);
 
         frontend.make404page(response);
-        page404=stringWriter.toString();
+        page404 = stringWriter.toString();
         stringWriter.flush();
+
+        DatabaseService databaseService1 = new DatabaseService(ms);
+        DatabaseService databaseService2 = new DatabaseService(ms);
+        (new Thread(frontend)).start();
+        (new Thread(databaseService1)).start();
+        (new Thread(databaseService2)).start();
     }
 
     @Test
@@ -80,6 +91,6 @@ public class RoutingTest {
         when(session.getAttribute("userId")).thenReturn(null);
 
         frontend.doGet(request, response);
-        verify(response).sendRedirect("/authform");
+        Assert.assertFalse(response.getWriter().toString().equals(page404));
     }
 }
